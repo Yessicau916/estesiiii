@@ -2,13 +2,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const app = document.getElementById('roleApp');
     if (!app) return;
 
+    const roleActionPermissions = window.APP_PERMISSIONS?.roles || [];
+    const hasRolePermission = action => roleActionPermissions.includes(action);
+    const requiredRolePermission = {
+        create: 'crear', view: 'ver', edit: 'editar', delete: 'eliminar',
+        'confirm-delete': 'eliminar', 'bulk-delete': 'eliminar', 'selection-mode': 'eliminar',
+        'select-role': 'eliminar', 'select-visible': 'eliminar', refresh: 'ver', dashboard: 'ver'
+    };
+
     const modules = [
         { id: 'dashboard', name: 'Dashboard', description: 'Visualización de métricas, reportes y estadísticas generales', icon: 'dashboard', actions: [['ver', 'Ver Dashboard'], ['exportar', 'Exportar Reportes']] },
         { id: 'users', name: 'Usuarios', description: 'Administración de cuentas de acceso al sistema', icon: 'users', actions: [['ver', 'Ver'], ['crear', 'Crear'], ['editar', 'Editar'], ['eliminar', 'Eliminar']] },
         { id: 'roles', name: 'Roles y Permisos', description: 'Configuración de perfiles y niveles de autorización', icon: 'shield', actions: [['ver', 'Ver'], ['crear', 'Crear'], ['editar', 'Editar'], ['eliminar', 'Eliminar']] },
         { id: 'employees', name: 'Empleados', description: 'Directorio de personal técnico y administrativo', icon: 'briefcase', actions: [['ver', 'Ver'], ['crear', 'Crear'], ['editar', 'Editar'], ['eliminar', 'Eliminar']] },
         { id: 'categories', name: 'Categorías', description: 'Clasificación de actividades, especialidades y servicios', icon: 'folder', actions: [['ver', 'Ver'], ['crear', 'Crear'], ['editar', 'Editar'], ['eliminar', 'Eliminar']] },
-        { id: 'work_orders', name: 'Órdenes de Trabajo', description: 'Seguimiento, ejecución y asignación de órdenes de campo', icon: 'clipboard', actions: [['ver', 'Ver'], ['crear', 'Crear'], ['editar', 'Editar'], ['eliminar', 'Eliminar'], ['asignar', 'Asignar Personal']] },
+        { id: 'work_orders', name: 'Órdenes de Trabajo', description: 'Seguimiento, ejecución y asignación de órdenes de campo', icon: 'clipboard', actions: [['ver', 'Ver'], ['crear', 'Crear'], ['editar', 'Editar'], ['eliminar', 'Eliminar'], ['asignar', 'Asignar Personal'], ['seleccionar', 'Seleccionar órdenes'], ['importar', 'Importar CSV'], ['exportar', 'Exportar CSV'], ['editar_masivo', 'Edición masiva'], ['eliminar_masivo', 'Eliminación masiva'], ['ver_ejecucion', 'Ver porcentaje de ejecución']] },
         { id: 'forms', name: 'Formularios', description: 'Plantillas de inspección técnica y recolección de datos', icon: 'file', actions: [['ver', 'Ver'], ['crear', 'Crear'], ['editar', 'Editar'], ['eliminar', 'Eliminar'], ['responder', 'Diligenciar']] },
         { id: 'contracts', name: 'Contratos', description: 'Gestión contractual y asignaciones vinculadas', icon: 'signature', actions: [['ver', 'Ver'], ['crear', 'Crear'], ['editar', 'Editar'], ['eliminar', 'Eliminar']] },
         { id: 'regions', name: 'Regiones', description: 'Zonas geográficas y sedes operativas de cobertura', icon: 'pin', actions: [['ver', 'Ver'], ['crear', 'Crear'], ['editar', 'Editar'], ['eliminar', 'Eliminar']] }
@@ -75,6 +83,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function permissionModuleCount(role) {
         return Object.values(rolePermissions(role)).filter(actions => Array.isArray(actions) && actions.length > 0).length;
+    }
+
+    function moduleName(moduleId) {
+        return modules.find(module => module.id === moduleId)?.name || moduleId.replaceAll('_', ' ');
     }
 
     function isActive(role) {
@@ -219,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <td class="id-cell">${escapeHTML(role.id)}</td>
                             <td><span class="role-name">${escapeHTML(role.name)}</span></td>
                             <td class="description-cell">${escapeHTML(role.description || 'Sin descripción')}</td>
-                            <td><div class="module-tags">${modulesCount ? `<span class="module-count">${modulesCount} ${modulesCount === 1 ? 'módulo' : 'módulos'}</span>${permissions.slice(0, 3).map(id => `<span class="module-tag">${escapeHTML(id.replaceAll('_', ' '))}</span>`).join('')}${modulesCount > 3 ? `<span class="more-modules">+${modulesCount - 3} más</span>` : ''}` : '<span class="no-modules">Sin módulos asignados</span>'}</div></td>
+                            <td><div class="module-tags">${modulesCount ? `<span class="module-count">${modulesCount} ${modulesCount === 1 ? 'módulo' : 'módulos'}</span>${permissions.slice(0, 3).map(id => `<span class="module-tag">${escapeHTML(moduleName(id))}</span>`).join('')}${modulesCount > 3 ? `<span class="more-modules">+${modulesCount - 3} más</span>` : ''}` : '<span class="no-modules">Sin módulos asignados</span>'}</div></td>
                             <td><span class="status-badge ${active ? 'is-active' : 'is-inactive'}"><span></span>${active ? 'Activo' : 'Inactivo'}</span></td>
                             <td><div class="row-actions"><button class="icon-action" type="button" data-action="view" data-id="${escapeHTML(role.id)}" aria-label="Ver rol" title="Ver permisos">${icon('eye')}</button><button class="icon-action" type="button" data-action="edit" data-id="${escapeHTML(role.id)}" aria-label="Editar rol" title="Editar">${icon('edit')}</button><button class="icon-action is-danger" type="button" data-action="delete" data-id="${escapeHTML(role.id)}" aria-label="Eliminar rol" title="Eliminar">${icon('trash')}</button></div></td>
                         </tr>`;
@@ -260,6 +272,16 @@ document.addEventListener('DOMContentLoaded', () => {
             ${state.showDashboard ? renderDashboard() : ''}${renderDeleteDialog()}
         </section>`;
 
+        app.querySelectorAll('[data-action]').forEach(control => {
+            const required = requiredRolePermission[control.dataset.action];
+            if (required && !hasRolePermission(required)) {
+                control.disabled = true;
+                control.classList.add('is-permission-blocked');
+                control.setAttribute('aria-disabled', 'true');
+                control.title = `Acción bloqueada: tu rol no tiene permiso para ${required} roles.`;
+            }
+        });
+
         app.querySelector('#roleSearch')?.addEventListener('input', event => {
             const cursorPosition = event.target.selectionStart ?? event.target.value.length;
             state.searchTerm = event.target.value;
@@ -291,6 +313,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const control = event.currentTarget;
         const action = control.dataset.action;
         const id = control.dataset.id;
+        const required = requiredRolePermission[action];
+        if (required && !hasRolePermission(required)) {
+            window.alert(`Tu rol no tiene permiso para ${required} roles.`);
+            return;
+        }
 
         if (action === 'refresh') {
             if (await loadRoles()) showToast('Lista de roles actualizada.');
@@ -460,6 +487,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function saveRole(event) {
         event.preventDefault();
+        const required = state.currentView === 'create' ? 'crear' : 'editar';
+        if (!hasRolePermission(required)) {
+            window.alert(`Tu rol no tiene permiso para ${required} roles.`);
+            return;
+        }
         const form = event.currentTarget;
         const name = form.elements.name.value.trim();
         const description = form.elements.description.value.trim();

@@ -36,6 +36,16 @@ class ModuleController {
             'description' => 'Gestión contractual y asignaciones vinculadas.',
             'icon' => 'signature',
         ],
+        'assignments' => [
+            'title' => 'Asignación',
+            'description' => 'Consulta y administra las asignaciones de contratos.',
+            'icon' => 'clipboard',
+        ],
+        'regions' => [
+            'title' => 'Regiones',
+            'description' => 'Consulta y administra las regiones operativas.',
+            'icon' => 'folder',
+        ],
     ];
 
     public function show(string $slug): void {

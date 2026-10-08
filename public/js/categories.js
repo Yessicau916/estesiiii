@@ -2,6 +2,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const app = document.getElementById('categoryApp');
     if (!app) return;
 
+    const permissions = window.APP_PERMISSIONS || {};
+    const hasPermission = action => (permissions.categories || []).includes(action);
+    const actionPermission = {
+        create: 'crear', edit: 'editar', delete: 'eliminar', 'confirm-delete': 'eliminar', 'bulk-delete': 'eliminar',
+        'selection-mode': 'eliminar', 'select-all': 'eliminar', 'select-category': 'eliminar',
+        view: 'ver', refresh: 'ver', retry: 'ver', dashboard: 'ver'
+    };
+
     const iconPaths = {
         folder: '<path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v8a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/><path d="M3.5 9h17"/>',
         refresh: '<path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9a7 7 0 0 1 11.6-2L20 12M4 12l2.8 5a7 7 0 0 0 11.6-2"/>',
@@ -153,6 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderCategoryModal() {
         if (!state.showModal) return '';
         const isViewing = state.modalMode === 'view';
+        const canSave = hasPermission(state.modalMode === 'edit' ? 'editar' : 'crear');
         const heading = isViewing ? 'Ver categoría' : state.modalMode === 'edit' ? 'Editar categoría' : 'Crear categoría';
         return `<div class="category-overlay" data-overlay="category-modal"><section class="category-dialog category-form-dialog" role="dialog" aria-modal="true" aria-labelledby="category-modal-title">
             <header class="category-dialog-header"><div><h2 id="category-modal-title">${heading}</h2><p>${isViewing ? 'Consulta los datos guardados de esta categoría.' : state.modalMode === 'edit' ? 'Actualiza los datos de la categoría.' : 'Completa la información de la nueva categoría.'}</p></div><button class="category-icon-button" type="button" data-action="close-modal" aria-label="Cerrar ventana">${icon('close')}</button></header>
@@ -163,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <label class="category-field"><span>Estado <b>*</b></span><select name="status"><option value="ACTIVO" ${state.formData.status === 'ACTIVO' ? 'selected' : ''}>ACTIVO</option><option value="INACTIVO" ${state.formData.status === 'INACTIVO' ? 'selected' : ''}>INACTIVO</option></select></label>` : ''}
                 <label class="category-field"><span>Descripción</span><textarea name="description" rows="4" maxlength="255" placeholder="Detalles y alcance de la categoría..." ${isViewing ? 'disabled' : ''}>${escapeHTML(state.formData.description)}</textarea><small class="field-error">${escapeHTML(state.formErrors.description || '')}</small></label>
                 ${isViewing && state.currentCategory?.created_at ? `<p class="category-created-at">Registrada: ${escapeHTML(state.currentCategory.created_at)}</p>` : ''}
-                <footer class="category-form-actions"><button class="category-secondary-btn" type="button" data-action="close-modal">${isViewing ? 'Cerrar' : 'Cancelar'}</button>${!isViewing ? `<button class="category-primary-btn" type="submit" ${state.submitting ? 'disabled' : ''}>${state.submitting ? 'Guardando…' : state.modalMode === 'edit' ? 'Guardar cambios' : 'Crear categoría'}</button>` : ''}</footer>
+                <footer class="category-form-actions"><button class="category-secondary-btn" type="button" data-action="close-modal">${isViewing ? 'Cerrar' : 'Cancelar'}</button>${!isViewing ? `<button class="category-primary-btn ${!canSave ? 'is-permission-blocked' : ''}" type="submit" ${state.submitting || !canSave ? 'disabled' : ''} ${!canSave ? 'title="Tu rol no tiene permiso para guardar cambios."' : ''}>${state.submitting ? 'Guardando…' : state.modalMode === 'edit' ? 'Guardar cambios' : 'Crear categoría'}</button>` : ''}</footer>
             </form>
         </section></div>`;
     }
@@ -209,6 +218,16 @@ document.addEventListener('DOMContentLoaded', () => {
             ${state.showDashboard ? renderDashboard() : ''}${renderCategoryModal()}${renderDeleteDialog()}
         </section>`;
 
+        app.querySelectorAll('[data-action]').forEach(control => {
+            const required = actionPermission[control.dataset.action];
+            if (required && !hasPermission(required)) {
+                control.disabled = true;
+                control.classList.add('is-permission-blocked');
+                control.setAttribute('aria-disabled', 'true');
+                control.title = `Acción bloqueada: tu rol no tiene permiso para ${required} categorías.`;
+            }
+        });
+
         app.querySelector('#categorySearch')?.addEventListener('input', event => {
             const cursorPosition = event.target.selectionStart ?? event.target.value.length;
             state.searchTerm = event.target.value;
@@ -242,6 +261,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const control = event.currentTarget;
         const action = control.dataset.action;
         const id = control.dataset.id;
+        const required = actionPermission[action];
+        if (required && !hasPermission(required)) {
+            window.alert(`Tu rol no tiene permiso para ${required} categorías.`);
+            return;
+        }
         if (action === 'refresh' || action === 'retry') {
             loadCategories();
         } else if (action === 'selection-mode') {
@@ -317,6 +341,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function saveCategory(event) {
         event.preventDefault();
+        const required = state.modalMode === 'edit' ? 'editar' : 'crear';
+        if (!hasPermission(required)) {
+            window.alert(`Tu rol no tiene permiso para ${required} categorías.`);
+            return;
+        }
         const form = event.currentTarget;
         const name = form.elements.name.value.trim();
         const description = form.elements.description.value.trim();

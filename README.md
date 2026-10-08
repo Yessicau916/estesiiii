@@ -34,6 +34,29 @@ appsig
 3. Set up your database and update the `config/database.php` file with your database credentials.
 4. Run the application using a local server (e.g., XAMPP, MAMP, or built-in PHP server).
 
+## Active Directory
+The employee creation form searches Active Directory before showing the role and employee fields. For local testing without a directory connection, enable the clearly labeled mock directory mode:
+
+```powershell
+$env:AD_DIRECTORY_MODE = "mock"
+php -S localhost:8000 -t public
+```
+
+The mock mode provides the sample accounts Juan Pérez and Maria Gómez from the design. It still saves test employees only to the local database configured in `config/database.php`. Leave `AD_DIRECTORY_MODE` unset for real directory use. To connect to Active Directory, enable the LDAP extension for the PHP CLI/server and configure these environment variables before starting PHP:
+
+```powershell
+$env:AD_LDAP_HOST = "ad.example.local"
+$env:AD_LDAP_PORT = "636"
+$env:AD_LDAP_BASE_DN = "DC=example,DC=local"
+$env:AD_LDAP_BIND_DN = "CN=appsig-reader,OU=Service Accounts,DC=example,DC=local"
+$env:AD_LDAP_BIND_PASSWORD = "set-this-in-your-local-environment"
+php -S localhost:8000 -t public
+```
+
+Use a read-only bind account and LDAPS on port 636. For StartTLS on port 389, set `AD_LDAP_PORT` to `389` and `AD_LDAP_STARTTLS` to `true`. Do not commit directory credentials. Apply `database/migrations/003_add_employee_directory_id.sql` before creating employees from directory accounts.
+
+The work orders page uses the existing `ordenes_trabajo`, `asignaciones_contrato`, `contratos`, `regiones`, and `empleados` tables. Apply `database/migrations/004_create_work_orders.sql` once to add priority and display-status fields before opening the work orders module.
+
 ## Usage
 - Access the application through your web browser at `http://localhost/appsig/public/index.php`.
 - Use the navigation to manage roles:

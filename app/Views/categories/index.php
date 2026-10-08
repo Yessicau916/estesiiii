@@ -17,6 +17,7 @@ declare(strict_types=1);
     <div id="categoryApp" class="category-app" aria-live="polite"></div>
     </main>
 </div>
+<script src="/js/menu.js"></script>
 <script src="/js/categories.js"></script>
 </body>
 </html>

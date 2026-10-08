@@ -77,5 +77,6 @@ $recentRoles = array_slice($roles, 0, 5);
     </section>
 </main>
 </div>
+<script src="/js/menu.js"></script>
 </body>
 </html>

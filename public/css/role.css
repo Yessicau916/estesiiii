@@ -456,7 +456,8 @@ a { text-decoration: none; }
   background: #fff4eb;
 }
 
-.icon-action:disabled { cursor: wait; opacity: 0.55; }
+.icon-action:disabled { cursor: not-allowed; opacity: 0.45; }
+.icon-action.is-permission-blocked { filter: grayscale(.75); }
 .icon-action.is-danger { color: #b91c1c; }
 .icon-action.is-danger:hover { border-color: #fecaca; background: #fef2f2; }
 .icon-action > span { font-size: 11px; font-weight: 700; }
@@ -546,7 +547,7 @@ a { text-decoration: none; }
 .module-count { padding: 4px 7px; border-radius: 6px; background: #fff0e9; color: #c24c1c; font-size: 10px; font-weight: 700; white-space: nowrap; }
 .module-tag { padding: 4px 6px; border-radius: 5px; background: #f1f3f5; color: #68737e; font-size: 10px; text-transform: capitalize; white-space: nowrap; }
 .more-modules, .no-modules { color: #8b959f; font-size: 10px; white-space: nowrap; }
-.status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+.status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 10px 9px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
 .status-badge > span { width: 7px; height: 7px; border-radius: 50%; }
 .status-badge.is-active { background: #ecfdf3; color: #147344; }
 .status-badge.is-active > span { background: #22a064; }

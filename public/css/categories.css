@@ -212,7 +212,11 @@
   .category-pagination { padding: 10px 12px; }
   .category-pagination-controls { gap: 7px; flex-wrap: wrap; }
   .category-page-range { display: none; }
-  .category-page-buttons { margin-left: auto; }
+.category-page-buttons { margin-left: auto; }
+.category-icon-button.is-permission-blocked,
+.category-primary-btn.is-permission-blocked,
+.category-icon-button.is-blocked,
+.category-primary-btn.is-blocked { cursor: not-allowed; opacity: .45; filter: grayscale(.75); }
   .category-view-summary { grid-template-columns: 1fr; }
   .category-dashboard-stats { grid-template-columns: 1fr; gap: 8px; padding: 14px; }
   .category-dashboard-stats article { min-height: 90px; }
